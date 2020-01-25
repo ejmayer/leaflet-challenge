@@ -1,6 +1,10 @@
 // Perform an API call to the USGS API to get station information. Call createMarkers when complete
 d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson", createMarkers);
 
+d3.json("https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json", createLines);
+// https://github.com/fraxen/tectonicplates/blob/master/GeoJSON/PB2002_boundaries.json
+
+
  // Define function to create the circle radius based on the magnitude
 function circleSize(magnitude) {
   return magnitude * 40000;
@@ -27,6 +31,22 @@ function circleColor(magnitude) {
     return "#7a0177"
   }
 }
+
+ // Creat a layer for the tectonic plates
+ var tectonicLines = new L.LayerGroup();
+
+// create function for creating tatonic lines
+function createLines(data) {
+
+  // console.log(data);
+
+      // Adding geoJSON data and style to the tectonic lines map layer
+      L.geoJson(data, {
+        color: "red",
+        weight: 1
+      })
+      .addTo(tectonicLines);
+  };
 
 // create function for creating circle markers
 function createMarkers(response) {
@@ -77,7 +97,7 @@ function createMap(earthquakes) {
     accessToken: API_KEY
   });
 
-  // add secondary satellit tile layer
+  // add secondary satellite and outdoor tile layers
   var satellitemap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
     attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
     maxZoom: 18,
@@ -85,22 +105,31 @@ function createMap(earthquakes) {
     accessToken: API_KEY
   });
   
+  var outdoorsmap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
+    attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+    maxZoom: 18,
+    id: "mapbox.outdoors",
+    accessToken: API_KEY
+  });
+
   // Create a baseMaps object to hold the lightmap layer
   var baseMaps = {
     "Light Map": lightmap,
-    "Satellite Map": satellitemap
+    "Satellite Map": satellitemap,
+    "Outdoors Map": outdoorsmap
   };
 
   // Create an overlayMaps object to hold the earthquakes layer
   var overlayMaps = {
-    "Earthquakes": earthquakes
+    "Earthquakes": earthquakes,
+    "Tectonic Map": tectonicLines
   };
 
   // Create the map object with options
   var map = L.map("map", {
     center: [26.726017, -1.082667],
     zoom: 3,
-    layers: [satellitemap, lightmap, earthquakes]
+    layers: [satellitemap, lightmap, outdoorsmap, earthquakes, tectonicLines]
   });
 
   // Create a layer control, pass in the baseMaps and overlayMaps. Add the layer control to the map
